@@ -37,7 +37,7 @@ typedef void (^findDevicesBlock)(NSArray *ipAddresses);
             NSURLRequest *request = [[NSURLRequest alloc] initWithURL:url cachePolicy:NSURLRequestReloadIgnoringCacheData timeoutInterval:5];
             [NSURLConnection sendAsynchronousRequest:request queue:[[NSOperationQueue alloc] init] completionHandler:^(NSURLResponse *response, NSData *data, NSError *error){
                 NSHTTPURLResponse *hResponse = (NSHTTPURLResponse*)response;
-                if (hResponse.statusCode != 200){
+                if (hResponse.statusCode != 200 || error){
                     completion(devices, error);
                     return;
                 }
@@ -65,7 +65,7 @@ typedef void (^findDevicesBlock)(NSArray *ipAddresses);
                 }
                 NSSortDescriptor *sort = [NSSortDescriptor sortDescriptorWithKey:@"name" ascending:YES];
                 [devices sortUsingDescriptors:[NSArray arrayWithObjects:sort, nil]];
-                completion(devices, error);
+                completion(devices, nil);
             }];
         }];
     });
