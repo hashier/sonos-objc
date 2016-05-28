@@ -60,6 +60,8 @@ typedef void (^findDevicesBlock)(NSArray *ipAddresses);
                         NSSortDescriptor *sort = [NSSortDescriptor sortDescriptorWithKey:@"name" ascending:YES];
                         [devices sortUsingDescriptors:[NSArray arrayWithObjects:sort, nil]];
                         completion(devices, error);
+                    } else {
+                        completion(nil, nil);
                     }
                 }];
             } else {
