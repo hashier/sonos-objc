@@ -37,7 +37,9 @@ typedef void (^findDevicesBlock)(NSArray *ipAddresses);
                         NSDictionary *responseDictionary = [XMLReader dictionaryForXMLData:data error:&error];
                         NSObject *oneOrManyPlayers = responseDictionary[@"ZPSupportInfo"][@"ZonePlayers"][@"ZonePlayer"];
                         NSArray *zonePlayers;
-                        if ([oneOrManyPlayers isKindOfClass:[NSArray class]]) {
+                        if (!oneOrManyPlayers) {
+                            zonePlayers = [[NSArray alloc] init];
+                        } else if ([oneOrManyPlayers isKindOfClass:[NSArray class]]) {
                             zonePlayers = (NSArray *)oneOrManyPlayers;
                         } else {
                             zonePlayers = [NSArray arrayWithObject:oneOrManyPlayers];
