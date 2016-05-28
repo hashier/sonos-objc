@@ -27,47 +27,46 @@ typedef void (^findDevicesBlock)(NSArray *ipAddresses);
         SonosDiscover *discover = [[SonosDiscover alloc] init];
         [discover findDevices:^(NSArray *ipAdresses) {
             NSMutableArray *devices = [[NSMutableArray alloc] init];
-            if (ipAdresses.count > 0) {
-                NSString *ipAddress = [ipAdresses objectAtIndex:0];
-                NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:@"http://%@/status/topology", ipAddress]];
-                NSURLRequest *request = [[NSURLRequest alloc] initWithURL:url cachePolicy:NSURLRequestReloadIgnoringCacheData timeoutInterval:5];
-                [NSURLConnection sendAsynchronousRequest:request queue:[[NSOperationQueue alloc] init] completionHandler:^(NSURLResponse *response, NSData *data, NSError *error){
-                    NSHTTPURLResponse *hResponse = (NSHTTPURLResponse*)response;
-                    if (hResponse.statusCode == 200){
-                        NSDictionary *responseDictionary = [XMLReader dictionaryForXMLData:data error:&error];
-                        NSObject *oneOrManyPlayers = responseDictionary[@"ZPSupportInfo"][@"ZonePlayers"][@"ZonePlayer"];
-                        NSArray *zonePlayers;
-                        if (!oneOrManyPlayers) {
-                            zonePlayers = [[NSArray alloc] init];
-                        } else if ([oneOrManyPlayers isKindOfClass:[NSArray class]]) {
-                            zonePlayers = (NSArray *)oneOrManyPlayers;
-                        } else {
-                            zonePlayers = [NSArray arrayWithObject:oneOrManyPlayers];
-                        }
-                        
-                        for (NSDictionary *dictionary in zonePlayers){
-                            NSString *name = dictionary[@"text"];
-                            NSString *coordinator = dictionary[@"coordinator"];
-                            NSString *uuid = dictionary[@"uuid"];
-                            NSString *group = dictionary[@"group"];
-                            NSString *ip = [[dictionary[@"location"] stringByReplacingOccurrencesOfString:@"http://" withString:@""] stringByReplacingOccurrencesOfString:@"/xml/device_description.xml" withString:@""];
-                            NSArray *location = [ip componentsSeparatedByString:@":"];
-                            SonosController *controllerObject = [[SonosController alloc] initWithIP:[location objectAtIndex:0] port:[[location objectAtIndex:1] intValue]];
-                            
-                            [devices addObject:@{@"ip": [location objectAtIndex:0], @"port" : [location objectAtIndex:1], @"name": name, @"coordinator": [NSNumber numberWithBool:[coordinator isEqualToString:@"true"] ? YES : NO], @"uuid": uuid, @"group": group, @"controller": controllerObject}];
-                            
-                        }
-                        NSSortDescriptor *sort = [NSSortDescriptor sortDescriptorWithKey:@"name" ascending:YES];
-                        [devices sortUsingDescriptors:[NSArray arrayWithObjects:sort, nil]];
-                        completion(devices, error);
-                    } else {
-                        completion(nil, nil);
-                    }
-                }];
-            } else {
-                // No devices found
-                completion(nil, nil);
+            if (ipAdresses.count == 0) {
+                completion(devices, nil);
+                return;
             }
+            NSString *ipAddress = [ipAdresses objectAtIndex:0];
+            //TODO: Shouldn't we process all ipAddresses here?!?
+            NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:@"http://%@/status/topology", ipAddress]];
+            NSURLRequest *request = [[NSURLRequest alloc] initWithURL:url cachePolicy:NSURLRequestReloadIgnoringCacheData timeoutInterval:5];
+            [NSURLConnection sendAsynchronousRequest:request queue:[[NSOperationQueue alloc] init] completionHandler:^(NSURLResponse *response, NSData *data, NSError *error){
+                NSHTTPURLResponse *hResponse = (NSHTTPURLResponse*)response;
+                if (hResponse.statusCode != 200){
+                    completion(devices, error);
+                    return;
+                }
+                NSDictionary *responseDictionary = [XMLReader dictionaryForXMLData:data error:&error];
+                NSObject *oneOrManyPlayers = responseDictionary[@"ZPSupportInfo"][@"ZonePlayers"][@"ZonePlayer"];
+                NSArray *zonePlayers;
+                if (!oneOrManyPlayers) {
+                    zonePlayers = [[NSArray alloc] init];
+                } else if ([oneOrManyPlayers isKindOfClass:[NSArray class]]) {
+                    zonePlayers = (NSArray *)oneOrManyPlayers;
+                } else {
+                    zonePlayers = [NSArray arrayWithObject:oneOrManyPlayers];
+                }
+                for (NSDictionary *dictionary in zonePlayers){
+                    NSString *name = dictionary[@"text"];
+                    NSString *coordinator = dictionary[@"coordinator"];
+                    NSString *uuid = dictionary[@"uuid"];
+                    NSString *group = dictionary[@"group"];
+                    NSString *ip = [[dictionary[@"location"] stringByReplacingOccurrencesOfString:@"http://" withString:@""] stringByReplacingOccurrencesOfString:@"/xml/device_description.xml" withString:@""];
+                    NSArray *location = [ip componentsSeparatedByString:@":"];
+                    SonosController *controllerObject = [[SonosController alloc] initWithIP:[location objectAtIndex:0] port:[[location objectAtIndex:1] intValue]];
+
+                    [devices addObject:@{@"ip": [location objectAtIndex:0], @"port" : [location objectAtIndex:1], @"name": name, @"coordinator": [NSNumber numberWithBool:[coordinator isEqualToString:@"true"] ? YES : NO], @"uuid": uuid, @"group": group, @"controller": controllerObject}];
+
+                }
+                NSSortDescriptor *sort = [NSSortDescriptor sortDescriptorWithKey:@"name" ascending:YES];
+                [devices sortUsingDescriptors:[NSArray arrayWithObjects:sort, nil]];
+                completion(devices, error);
+            }];
         }];
     });
 }
