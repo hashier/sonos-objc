@@ -26,9 +26,9 @@ typedef void (^findDevicesBlock)(NSArray *ipAddresses);
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         SonosDiscover *discover = [[SonosDiscover alloc] init];
         [discover findDevices:^(NSArray *ipAdresses) {
-            NSMutableArray *devices = [[NSMutableArray alloc] init];
+            NSMutableArray *controllers = [[NSMutableArray alloc] init];
             if (ipAdresses.count == 0) {
-                completion(devices, nil);
+                completion(controllers, nil);
                 return;
             }
             NSString *ipAddress = [ipAdresses objectAtIndex:0];
@@ -38,7 +38,7 @@ typedef void (^findDevicesBlock)(NSArray *ipAddresses);
             [NSURLConnection sendAsynchronousRequest:request queue:[[NSOperationQueue alloc] init] completionHandler:^(NSURLResponse *response, NSData *data, NSError *error){
                 NSHTTPURLResponse *hResponse = (NSHTTPURLResponse*)response;
                 if (hResponse.statusCode != 200 || error){
-                    completion(devices, error);
+                    completion(controllers, error);
                     return;
                 }
                 NSDictionary *responseDictionary = [XMLReader dictionaryForXMLData:data error:&error];
@@ -58,14 +58,17 @@ typedef void (^findDevicesBlock)(NSArray *ipAddresses);
                     NSString *group = dictionary[@"group"];
                     NSString *ip = [[dictionary[@"location"] stringByReplacingOccurrencesOfString:@"http://" withString:@""] stringByReplacingOccurrencesOfString:@"/xml/device_description.xml" withString:@""];
                     NSArray *location = [ip componentsSeparatedByString:@":"];
-                    SonosController *controllerObject = [[SonosController alloc] initWithIP:[location objectAtIndex:0] port:[[location objectAtIndex:1] intValue]];
+                    SonosController *controller = [[SonosController alloc] initWithIP:[location objectAtIndex:0] port:[[location objectAtIndex:1] intValue]];
+                    controller.group = group;
+                    controller.name = name;
+                    controller.uuid = uuid;
+                    controller.coordinator = [coordinator isEqualToString:@"true"];
 
-                    [devices addObject:@{@"ip": [location objectAtIndex:0], @"port" : [location objectAtIndex:1], @"name": name, @"coordinator": [NSNumber numberWithBool:[coordinator isEqualToString:@"true"] ? YES : NO], @"uuid": uuid, @"group": group, @"controller": controllerObject}];
-
+                    [controllers addObject:controller];
                 }
                 NSSortDescriptor *sort = [NSSortDescriptor sortDescriptorWithKey:@"name" ascending:YES];
-                [devices sortUsingDescriptors:[NSArray arrayWithObjects:sort, nil]];
-                completion(devices, nil);
+                [controllers sortUsingDescriptors:[NSArray arrayWithObjects:sort, nil]];
+                completion(controllers, nil);
             }];
         }];
     });
