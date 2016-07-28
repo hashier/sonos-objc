@@ -52,18 +52,12 @@ typedef void (^findDevicesBlock)(NSArray *ipAddresses);
                     zonePlayers = [NSArray arrayWithObject:oneOrManyPlayers];
                 }
                 for (NSDictionary *dictionary in zonePlayers){
-                    NSString *name = dictionary[@"text"];
-                    NSString *coordinator = dictionary[@"coordinator"];
-                    NSString *uuid = dictionary[@"uuid"];
-                    NSString *group = dictionary[@"group"];
-                    NSString *ip = [[dictionary[@"location"] stringByReplacingOccurrencesOfString:@"http://" withString:@""] stringByReplacingOccurrencesOfString:@"/xml/device_description.xml" withString:@""];
-                    NSArray *location = [ip componentsSeparatedByString:@":"];
-                    SonosController *controller = [[SonosController alloc] initWithIP:[location objectAtIndex:0] port:[[location objectAtIndex:1] intValue]];
-                    controller.group = group;
-                    controller.name = name;
-                    controller.uuid = uuid;
-                    controller.coordinator = [coordinator isEqualToString:@"true"];
-
+                    NSURL *url                  = [NSURL URLWithString:dictionary[@"location"]];
+                    SonosController *controller = [[SonosController alloc] initWithIP:url.host port:[url.port intValue]];
+                    controller.group            = dictionary[@"group"];
+                    controller.name             = dictionary[@"text"];
+                    controller.uuid             = dictionary[@"uuid"];
+                    controller.coordinator      = [dictionary[@"coordinator"] isEqualToString:@"true"];
                     [controllers addObject:controller];
                 }
                 NSSortDescriptor *sort = [NSSortDescriptor sortDescriptorWithKey:@"name" ascending:YES];
