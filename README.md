@@ -12,40 +12,11 @@ CocoaPods is a dependency manager for Objective-C, which automates and simplifie
 **Podfile**
 
 ```rb
-pod "sonos-objc", "~> 0.1.2"
+pod 'Sonos', :git => 'https://github.com/getsenic/sonos-objc.git', :branch => 'master'
 ```
 
 # Usage
 
-```objective-c
-#import "SonosManager.h"
-#import "SonosController.h"
+Use `SonosDiscover` to discover all sonos controllers.
 
-@implementation ViewController
-
-- (void)viewDidLoad
-{
-    [super viewDidLoad];
-
-    [[SonosManager sharedInstance] addObserver:self forKeyPath:@"allDevices" options:NSKeyValueObservingOptionNew context:NULL];
-}
-
-- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
-	SonosController *controller = [[SonosManager sharedInstance] currentDevice];
-    [controller trackInfo:^(NSString *artist, NSString *title, NSString *album, NSURL *albumArt, NSInteger time, NSInteger duration, NSInteger queueIndex, NSString *trackURI, NSString *protocol, NSError *error){
-        
-        NSLog(@"Artist: %@", artist);
-        NSLog(@"Title: %@", title);
-        NSLog(@"Album: %@", album);
-        NSLog(@"Album Art: %@", albumArt);
-        NSLog(@"Time: %d", time);
-        NSLog(@"Duration: %d", duration);
-        NSLog(@"Place in queue: %d", queueIndex);
-        NSLog(@"Track URI: %@", trackURI);
-        NSLog(@"Protocol: %@", protocol);
-        
-    }];
-}
-```
-
-See SonosController.h for usage on how to control devices
+See `SonosController.h` for usage on how to control speakers.
