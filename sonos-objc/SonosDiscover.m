@@ -22,23 +22,30 @@ typedef void (^findDevicesBlock)(NSArray *ipAddresses);
 
 @implementation SonosDiscover
 
-+ (void)discoverControllers:(void (^)(NSArray *, NSError *))completion {
++ (void)discoverControllers:(void (^)(NSArray *))completion {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         SonosDiscover *discover = [[SonosDiscover alloc] init];
         [discover findDevices:^(NSArray *ipAddresses) {
-            NSMutableArray *controllers = [[NSMutableArray alloc] init];
+            __block NSMutableArray       *controllers      = [[NSMutableArray alloc] init];
+            __block dispatch_semaphore_t responseSemaphore = dispatch_semaphore_create(1);
+            __block int                  responseCount     = 0;
+            __block void (^callCompletionHandlerIfReady)() = ^{
+                dispatch_semaphore_wait(responseSemaphore, DISPATCH_TIME_FOREVER);
+                responseCount++;
+                BOOL shouldCallCompletionHandler = responseCount == ipAddresses.count;
+                dispatch_semaphore_signal(responseSemaphore);
+                if (shouldCallCompletionHandler) {
+                    completion([controllers valueForKeyPath:@"@distinctUnionOfObjects.self"]);
+                }
+            };
             if (ipAddresses.count == 0) {
-                completion(controllers, nil);
+                callCompletionHandlerIfReady();
                 return;
             }
-            NSString *ipAddress = [ipAddresses objectAtIndex:0];
-            //TODO: Shouldn't we process all ipAddresses here?!?
-            NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:@"http://%@/status/topology", ipAddress]];
-            NSURLRequest *request = [[NSURLRequest alloc] initWithURL:url cachePolicy:NSURLRequestReloadIgnoringCacheData timeoutInterval:5];
-            [NSURLConnection sendAsynchronousRequest:request queue:[[NSOperationQueue alloc] init] completionHandler:^(NSURLResponse *response, NSData *data, NSError *error){
+            void (^handler)(NSURLResponse *, NSData *, NSError *) = ^(NSURLResponse *response, NSData *data, NSError *error) {
                 NSHTTPURLResponse *hResponse = (NSHTTPURLResponse*)response;
                 if (hResponse.statusCode != 200 || error){
-                    completion(controllers, error);
+                    callCompletionHandlerIfReady();
                     return;
                 }
                 NSDictionary *responseDictionary = [XMLReader dictionaryForXMLData:data error:&error];
@@ -60,10 +67,14 @@ typedef void (^findDevicesBlock)(NSArray *ipAddresses);
                     controller.coordinator      = [dictionary[@"coordinator"] isEqualToString:@"true"];
                     [controllers addObject:controller];
                 }
-                NSSortDescriptor *sort = [NSSortDescriptor sortDescriptorWithKey:@"name" ascending:YES];
-                [controllers sortUsingDescriptors:[NSArray arrayWithObjects:sort, nil]];
-                completion(controllers, nil);
-            }];
+                callCompletionHandlerIfReady();
+            };
+
+            for (NSString *ipAddress in ipAddresses) {
+                NSURL        *url     = [NSURL URLWithString:[NSString stringWithFormat:@"http://%@/status/topology", ipAddress]];
+                NSURLRequest *request = [[NSURLRequest alloc] initWithURL:url cachePolicy:NSURLRequestReloadIgnoringCacheData timeoutInterval:5];
+                [NSURLConnection sendAsynchronousRequest:request queue:[[NSOperationQueue alloc] init] completionHandler:handler];
+            }
         }];
     });
 }
