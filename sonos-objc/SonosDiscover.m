@@ -25,13 +25,13 @@ typedef void (^findDevicesBlock)(NSArray *ipAddresses);
 + (void)discoverControllers:(void (^)(NSArray *, NSError *))completion {
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         SonosDiscover *discover = [[SonosDiscover alloc] init];
-        [discover findDevices:^(NSArray *ipAdresses) {
+        [discover findDevices:^(NSArray *ipAddresses) {
             NSMutableArray *controllers = [[NSMutableArray alloc] init];
-            if (ipAdresses.count == 0) {
+            if (ipAddresses.count == 0) {
                 completion(controllers, nil);
                 return;
             }
-            NSString *ipAddress = [ipAdresses objectAtIndex:0];
+            NSString *ipAddress = [ipAddresses objectAtIndex:0];
             //TODO: Shouldn't we process all ipAddresses here?!?
             NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:@"http://%@/status/topology", ipAddress]];
             NSURLRequest *request = [[NSURLRequest alloc] initWithURL:url cachePolicy:NSURLRequestReloadIgnoringCacheData timeoutInterval:5];
@@ -72,24 +72,24 @@ typedef void (^findDevicesBlock)(NSArray *ipAddresses);
     self.completionBlock = block;
     self.ipAddressesArray = [NSArray array];
     self.udpSocket = [[GCDAsyncUdpSocket alloc] initWithDelegate:self delegateQueue:dispatch_get_main_queue()];
-    
+
     NSError *error = nil;
     if(![self.udpSocket bindToPort:0 error:&error]) {
         NSLog(@"Error binding");
     }
-    
+
     if(![self.udpSocket beginReceiving:&error]) {
         NSLog(@"Error receiving");
     }
-    
+
     [self.udpSocket enableBroadcast:TRUE error:&error];
     if(error) {
         NSLog(@"Error enabling broadcast");
     }
-    
+
     NSString *str = @"M-SEARCH * HTTP/1.1\r\nHOST: 239.255.255.250:1900\r\nMAN: \"ssdp: discover\"\r\nMX: 3\r\nST: urn:schemas-upnp-org:device:ZonePlayer:1\r\n\r\n";
     [self.udpSocket sendData:[str dataUsingEncoding:NSUTF8StringEncoding] toHost:@"239.255.255.250" port:1900 withTimeout:-1 tag:0];
-    
+
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 2 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
         [self stopDiscovery];
     });
