@@ -134,7 +134,7 @@
  @param URIMetaData URI Metadata XML String
  @param block Objective-C block to call on finish
  */
-- (void)queue:(NSString * _Nonnull)track URIMetaData:(NSString *)URIMetaData replace:(BOOL)replace completion:(void (^ _Nullable)(NSDictionary * _Nullable response, NSError * _Nullable error))block;
+- (void)queue:(NSString * _Nonnull)track URIMetaData:(NSString * _Nonnull)URIMetaData replace:(BOOL)replace completion:(void (^ _Nullable)(NSDictionary * _Nullable response, NSError * _Nullable error))block;
 
 /*
  Queue a Spotify playlist
