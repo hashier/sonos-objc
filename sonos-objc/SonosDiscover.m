@@ -106,7 +106,7 @@ typedef void (^findDevicesBlock)(NSArray *ipAddresses);
 - (void)udpSocket:(GCDAsyncUdpSocket *)sock didReceiveData:(NSData *)data fromAddress:(NSData *)address withFilterContext:(id)filterContext {
     NSString *msg = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
     if(msg) {
-        NSRegularExpression *reg = [[NSRegularExpression alloc] initWithPattern:@"http:\\/\\/(.*?)\\/" options:0 error:nil];
+        NSRegularExpression *reg = [[NSRegularExpression alloc] initWithPattern:@"http:\\/\\/(.*?):1400\\/" options:0 error:nil];
         NSArray *matches = [reg matchesInString:msg options:0 range:NSMakeRange(0, msg.length)];
         if (matches.count > 0) {
             NSTextCheckingResult *result = matches[0];
