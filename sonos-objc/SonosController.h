@@ -62,7 +62,7 @@
  @param track The Track URI, may be nil to just play current track
  @param block Objective-C block to call on finish
  */
-- (void)play:(NSString * _Nonnull)track completion:(void (^ _Nullable)(NSDictionary * _Nullable response, NSError * _Nullable error))block;
+- (void)play:(NSString * _Nullable)track completion:(void (^ _Nullable)(NSDictionary * _Nullable response, NSError * _Nullable error))block;
 
 /**
  Plays a track with custom URI Metadata, Spotify etc needs this, see playSpotifyTrack:completion:
