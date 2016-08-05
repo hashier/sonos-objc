@@ -26,16 +26,19 @@ typedef void (^findDevicesBlock)(NSArray *ipAddresses);
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
         SonosDiscover *discover = [[SonosDiscover alloc] init];
         [discover findDevices:^(NSArray *ipAddresses) {
-            NSMutableArray       *controllers      = [[NSMutableArray alloc] init];
-            dispatch_semaphore_t responseSemaphore = dispatch_semaphore_create(1);
-            __block int          responseCount     = 0;
-            void (^callCompletionHandlerIfReady)() = ^{
+            __block NSMutableArray         *controllers      = [[NSMutableArray alloc] init];
+            __block dispatch_semaphore_t   responseSemaphore = dispatch_semaphore_create(1);
+            __block int                    responseCount     = 0;
+            __block void (^callCompletionHandlerIfReady)()   = ^{
                 dispatch_semaphore_wait(responseSemaphore, DISPATCH_TIME_FOREVER);
                 responseCount++;
                 BOOL shouldCallCompletionHandler = responseCount == ipAddresses.count;
                 dispatch_semaphore_signal(responseSemaphore);
                 if (shouldCallCompletionHandler) {
                     completion([controllers valueForKeyPath:@"@distinctUnionOfObjects.self"]);
+                    controllers                  = nil;
+                    responseSemaphore            = nil;
+                    callCompletionHandlerIfReady = nil;
                 }
             };
             if (ipAddresses.count == 0) {
