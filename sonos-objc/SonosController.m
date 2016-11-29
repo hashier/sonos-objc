@@ -122,6 +122,12 @@ __a < __b ? __a : __b; })
         soap_action:@"SetAVTransportURI"
         soap_arguments:[NSString stringWithFormat:@"<InstanceID>0</InstanceID><CurrentURI>%@</CurrentURI><CurrentURIMetaData>%@</CurrentURIMetaData>", track, URIMetaData]
         completion:^(id responseObject, NSError *error) {
+            if (error) {
+                if (block) {
+                    block(responseObject, error);
+                }
+                return;
+            }
             [self play:nil completion:block];
         }];
 }
