@@ -228,7 +228,7 @@ __a < __b ? __a : __b; })
          upnp:@"/MediaRenderer/AVTransport/Control"
          soap_service:@"urn:schemas-upnp-org:service:AVTransport:1"
          soap_action:@"AddURIToQueue"
-         soap_arguments:[NSString stringWithFormat:@"<InstanceID>0</InstanceID><EnqueuedURI>%@</EnqueuedURI><EnqueuedURIMetaData></EnqueuedURIMetaData><DesiredFirstTrackNumberEnqueued>0</DesiredFirstTrackNumberEnqueued><EnqueueAsNext>1</EnqueueAsNext>", track]
+         soap_arguments:[NSString stringWithFormat:@"<InstanceID>0</InstanceID><EnqueuedURI>%@</EnqueuedURI><EnqueuedURIMetaData></EnqueuedURIMetaData><DesiredFirstTrackNumberEnqueued>1</DesiredFirstTrackNumberEnqueued><EnqueueAsNext>0</EnqueueAsNext>", track]
          completion:block];
     }
 }
@@ -249,7 +249,7 @@ __a < __b ? __a : __b; })
          upnp:@"/MediaRenderer/AVTransport/Control"
          soap_service:@"urn:schemas-upnp-org:service:AVTransport:1"
          soap_action:@"AddURIToQueue"
-         soap_arguments:[NSString stringWithFormat:@"<InstanceID>0</InstanceID><EnqueuedURI>%@</EnqueuedURI><EnqueuedURIMetaData>%@</EnqueuedURIMetaData><DesiredFirstTrackNumberEnqueued>0</DesiredFirstTrackNumberEnqueued><EnqueueAsNext>1</EnqueueAsNext>", track, URIMetaData]
+         soap_arguments:[NSString stringWithFormat:@"<InstanceID>0</InstanceID><EnqueuedURI>%@</EnqueuedURI><EnqueuedURIMetaData>%@</EnqueuedURIMetaData><DesiredFirstTrackNumberEnqueued>1</DesiredFirstTrackNumberEnqueued><EnqueueAsNext>0</EnqueueAsNext>", track, URIMetaData]
          completion:block];
     }
 }
